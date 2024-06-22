@@ -1,0 +1,168 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    #board {
+      width: 600px;
+      height: 400px;
+      border: 3px solid gray;
+      position: relative;
+      background: url("grass.jpg");
+      animation: bg_move 10s linear infinite;
+    }
+    @keyframes bg_move {
+      0% { background-position-x: 600px; }
+      100% { background-position-x: 0px; }
+    }
+    #avt {
+      width: 90px;
+      height: 70px;
+      background: url("sprite sheet.png");
+      background-position: 60px 70px;
+      animation: walk 3s steps(3) infinite;
+      position: absolute;
+      top: 200px; 
+      left: 30px;
+    }
+    @keyframes walk {
+      0% { background-position-x: 10px; }
+      100% { background-position-x: 10px; }
+    }
+    .box {
+      width: 50px;
+      height: 50px;
+      background: url("box.png");
+      position: absolute;
+      top: 200px; 
+      left: 530px; 
+    }
+    #timer {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 24px;
+      background-color: white;
+      padding: 5px;
+      border: 1px solid black;
+    }
+    #game-over {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 48px;
+      color: red;
+      display: none;
+    }
+  </style>
+  <script>
+    function get(id) {
+      return document.getElementById(id);
+    }
+
+    var boxes = []; 
+    var timerInterval; 
+    var startTime; 
+    var gameOver = false; 
+
+    function generateRandomBox() {
+      let box = document.createElement('div');
+      box.className = 'box';
+      box.style.left = '600px';
+      box.style.top = '200px';
+      get('board').appendChild(box);
+      boxes.push(box);
+      
+      let moveInterval = setInterval(function() {
+        if (gameOver) return; 
+        let currentLeft = parseInt(box.style.left, 10);
+        let newLeft = currentLeft - 5;
+
+        box.style.left = newLeft + 'px';
+
+        if (newLeft <= 0) {
+          clearInterval(moveInterval); 
+          get('board').removeChild(box); 
+          boxes.splice(boxes.indexOf(box), 1); 
+        }
+
+        checkCollision();
+      }, 50); 
+    }
+
+    function checkCollision() {
+      var avt = get("avt");
+      var avtRect = avt.getBoundingClientRect();
+
+      boxes.forEach(function(box) {
+        var boxRect = box.getBoundingClientRect();
+
+        if (
+          avtRect.x < boxRect.x + boxRect.width &&
+          avtRect.x + avtRect.width > boxRect.x &&
+          avtRect.y < boxRect.y + boxRect.height &&
+          avtRect.y + avtRect.height > boxRect.y
+        ) {
+          endGame(); 
+        }
+      });
+    }
+
+    function endGame() {
+      gameOver = true;
+      clearInterval(timerInterval); 
+      document.querySelectorAll('.box').forEach(function(box) {
+        box.style.animationPlayState = 'paused'; 
+      });
+      get('game-over').style.display = 'block';
+    }
+
+    function startTimer() {
+      startTime = Date.now(); 
+      timerInterval = setInterval(updateTimer, 1000); 
+    }
+
+    function updateTimer() {
+      var elapsedTime = Math.floor((Date.now() - startTime) / 1000); 
+      get('timer').innerText = 'Time: ' + elapsedTime + ' seconds'; 
+    }
+
+    function moveUpBy110() {
+      var avt = get("avt");
+      avt.style.top = (200 - 110) + "px"; 
+
+      setTimeout(function() {
+        avt.style.top = '200px'; 
+      }, 1500); 
+    }
+
+    function mykey(ev) {
+      ev.preventDefault();
+      if (ev.key == "ArrowUp" || ev.key == " ") { 
+        moveUpBy110(); 
+        generateRandomBox(); 
+        if (!timerInterval && !gameOver) { 
+          startTimer();
+        }
+      }
+    }
+
+    function playBackgroundMusic() {
+      get('bgm').play();
+    }
+  </script>
+</head>
+<body onkeydown="mykey(event);">
+  <div id="board">
+    <div id="avt"></div>
+    <div id="timer">Time: 0 seconds</div>
+    <div id="game-over">Game Over</div>
+    <button onclick="playBackgroundMusic();">Play Music</button>
+    <br>
+    <audio id="bgm" loop>
+      <source src="music.mp3" type="audio/mp3">
+    </audio>
+  </div>
+</body>
+</html>
